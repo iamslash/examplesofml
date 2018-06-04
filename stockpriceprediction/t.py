@@ -2,12 +2,14 @@ from pandas_datareader import data
 import pandas as pd
 import fix_yahoo_finance as yf
 yf.pdr_override()
-import pickle, re, glob, sys
+import pickle, re, glob, sys,
 
 import tensorflow as tf
 import numpy as np
+#Generate images without having a window appear
 import matplotlib
-import os
+if "DISPLAY" not in os.environ:
+    matplotlib.use('Agg')
 
 ############################################################
 # validate arguements
@@ -31,8 +33,7 @@ print('ok to save {}'.format(csv_fname))
 ############################################################
 # train data
 tf.set_random_seed(123)
-if "DISPLAY" not in os.environ:
-    matplotlib.use('Agg')
+
 
 ############################################################
 # TODO: write trained model and mark to a.dat
