@@ -36,24 +36,24 @@ def MinMaxScaler(data):
     # noise term prevents the zero division
     return numerator / (denominator + 1e-7)
 
-############################################################
-# validate arguements
-start_date = '2018-05-06' #'1996-05-06'
-stock_code = '001040.KS'
-if len(sys.argv) is 1:
-    print('Usage: t.py [stock code]')
-    print('')
-    print('Ex: t.py {}'.format(stock_code))
-    sys.exit(0)
-stock_code = sys.argv[1]
+# ############################################################
+# # validate arguements
+# start_date = '2018-05-06' #'1996-05-06'
+# stock_code = '001040.KS'
+# if len(sys.argv) is 1:
+#     print('Usage: t.py [stock code]')
+#     print('')
+#     print('Ex: t.py {}'.format(stock_code))
+#     sys.exit(0)
+# stock_code = sys.argv[1]
 
-############################################################
-# download historical data and write to csv file.
-stock_data = data.get_data_yahoo(stock_code, start_date)
-#print(stock_data.head())
-csv_fname = './{}.csv'.format(stock_code)
-stock_data.to_csv(csv_fname)
-print('ok to save {}'.format(csv_fname))
+# ############################################################
+# # download historical data and write to csv file.
+# stock_data = data.get_data_yahoo(stock_code, start_date)
+# #print(stock_data.head())
+# csv_fname = './{}.csv'.format(stock_code)
+# stock_data.to_csv(csv_fname)
+# print('ok to save {}'.format(csv_fname))
 
 ############################################################
 # train data
@@ -68,6 +68,8 @@ iterations = 500
 
 ############################################################
 # 
-xy = stock_data[::-1]
-
-#print(xy)
+xy = np.loadtxt("001040.KS.csv", delimiter=',')
+xy = xy[::-1] # reverse order
+xy = MinMaxScaler(xy)
+x = xy
+y = xy[:, [-1]] 
