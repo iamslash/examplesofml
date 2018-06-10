@@ -73,3 +73,40 @@ xy = xy[::-1] # reverse order
 xy = MinMaxScaler(xy)
 x = xy
 y = xy[:, [-1]] 
+
+############################################################
+# 
+dataX = []
+dataY = []
+for i in range(0, len(y) - seq_length):
+    _x = x[i:i + seq_length]
+    _y = y[i + seq_length]
+    dataX.append(_x)
+    dataY.append(_y)
+
+train_size = int(len(dataY) * 0.7)
+test_size = len(dataY) - train_size
+trainX = np.array(dataX[0:train_size])
+testX = np.array(dataX[train_size:])
+trainY = np.array(dataY[0:train_size])
+testY = np.array(dataY[train_size:])
+
+X = tf.placeholder(tf.float32, [None, seq_length, data_dim])
+Y = tf.placeholder(tf.float32, [None, 1])
+
+############################################################
+# build a LSTM
+cell = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_dim, state_is_tuple=True, activation=tf.tanh)
+outputs, _states = tf.nn.dynamic_rnn(cell, X, dtype=tf.float32)    
+Y_pred = tf.contrib.layers.fully_connected(outputs[:, -1], output_dim, activation_fn=None)
+
+loss = tf.reduce_sum(tf.square(Y_pred - Y))
+optimizer = tf.train.AdamOptimizer(learning_rate)
+train = optimizer.minimize(loss)
+
+# RMSE
+targets = tf.placeholder(tf.float32, [None, 1])
+predictions = tf.placeholder(tf.float32, [None, 1])
+rmse = tf.sqrt(tf.reduce_mean(tf.square(targets - predictions)))
+
+
