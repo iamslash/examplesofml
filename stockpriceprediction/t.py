@@ -41,13 +41,13 @@ def MinMaxScaler(data):
 # validate arguements
 start_date = '2018-05-06' #'1996-05-06'
 stock_code = '001040.KS'
-if len(sys.argv) is 2:
+if len(sys.argv) is not 3:
     print('Usage: t.py [stock code] [start date]')
     print('')
-    print('Ex: t.py {0} {1}'.format(stock_code, start_date))
+    print('Ex: python t.py {0} {1}'.format(stock_code, start_date))
     sys.exit(0)
 stock_code = sys.argv[1]
-start_date = '2018-05-06'
+start_date = sys.argv[2]
 
 ############################################################
 # download historical data and write to csv file.
@@ -58,7 +58,7 @@ if os.path.exists(csv_fname):
     stock_data = np.loadtxt(csv_fname, delimiter=',', usecols=(1,2,3,4,5))
 else:
     stock_data = data.get_data_yahoo(stock_code, start_date)
-    #print(stock_data.head())
+    print(stock_data.head())
     stock_data.to_csv(csv_fname, header=False, columns=['Open','High','Low','Volume','Adj Close'])
     print('ok to save {}'.format(csv_fname))
 
