@@ -20,15 +20,29 @@ pip install -r requirements.txt
 ## Train
 
 ```bash
-t.py 001040.KS
+t.py 001040.KS 2018-05-06
 ```
 
-Check the downloaded data `a.dat`. If there are datas to download then just download and train them.
+download data and train and predict.
 
-## Predict
+# Reseult
 
-```bash
-p.py 001040.KS
+## 001040.KS
+
+[001040.KS@yahoo](https://finance.yahoo.com/quote/001040.KS/chart?p=001040.KS)
+
+```
+seq_length = 7
+data_dim = 5
+hidden_dim = 10
+output_dim = 1
+learning_rate = 0.01
+iterations = 500
 ```
 
-Predict the closed price of the first argument stock code on the next day of the last day in `a.dat`.
+| start date | end date | seq length | hidden dim | learning_rate | iterations | RMSE | img |
+|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
+| 2000-05-06 | 2018-06-11 | 7 | 10 | 0.01 | 500 | 0.007609296590089798 | ![](img/2000-05-06.png)  |
+| 2006-05-06 | 2018-06-11 | 7 | 10 | 0.01 | 500 | 0.008111413568258286 | ![](img/2006-05-06.png)  |
+| 2008-05-06 | 2018-06-11 | 7 | 10 | 0.01 | 500 | 0.008038748987019062 | ![](img/2008-05-06.png)  |
+| 2016-05-06 | 2018-06-11 | 7 | 10 | 0.01 | 500 | 0.02125178463757038 | ![](img/2016-05-06.png)  |

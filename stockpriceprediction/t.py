@@ -39,7 +39,7 @@ def MinMaxScaler(data):
 
 ############################################################
 # validate arguements
-start_date = '2018-05-06' #'1996-05-06'
+start_date = '2016-05-06' #'1996-05-06'
 stock_code = '001040.KS'
 if len(sys.argv) is not 3:
     print('Usage: t.py [stock code] [start date]')
@@ -53,15 +53,15 @@ start_date = sys.argv[2]
 # download historical data and write to csv file.
 
 csv_fname = './{}.csv'.format(stock_code)
-stock_data = None
-if os.path.exists(csv_fname):
-    stock_data = np.loadtxt(csv_fname, delimiter=',', usecols=(1,2,3,4,5))
-else:
-    stock_data = data.get_data_yahoo(stock_code, start_date)
-    print(stock_data.head())
-    stock_data.to_csv(csv_fname, header=False, columns=['Open','High','Low','Volume','Adj Close'])
-    print('ok to save {}'.format(csv_fname))
+stock_data = data.get_data_yahoo(stock_code, start_date)
+if stock_data.size == 0:
+    print("ERROR: data size is zero. please retry...")
+    sys.exit(0)
 
+print(stock_data.head())
+stock_data.to_csv(csv_fname, header=False, columns=['Open','High','Low','Volume','Adj Close'])
+print('ok to save {}'.format(csv_fname))
+stock_data = np.loadtxt(csv_fname, delimiter=',', usecols=(1,2,3,4,5))
 ############################################################
 # train data
 tf.set_random_seed(123)
