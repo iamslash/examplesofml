@@ -1,2 +1,4 @@
+scikit-image>=0.14.1
+keras>=2.2.2
 tensorflow>=1.10.0
 gym-super-mario-bros>=4.1.0
