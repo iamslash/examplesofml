@@ -1,0 +1,2 @@
+tensorflow>=1.10.0
+gym-super-mario-bros>=4.1.0
