@@ -67,8 +67,6 @@ class MnistDcGan(object):
 
         self.x_train = input_data.read_data_sets("mnist", one_hot=True).train.images
         self.x_train = self.x_train.reshape(-1, self.dcgan.img_size).astype(np.float32)
-        
-
 
     def train(self, epoch_size=200, batch_size=128, save_interval=1):
 
