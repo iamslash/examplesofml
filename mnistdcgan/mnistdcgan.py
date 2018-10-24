@@ -36,16 +36,16 @@ class DcGan(object):
 
         self.D  = self.build_discriminator()       # discriminator
         self.G  = self.build_generator()       # generator       
-        self.DL = None      # discriminator loss
-        self.GL = None      # generator loss
+        self.DM = self.build_discriminator_model()      # discriminator loss
+        self.GM = self.build_generator_model()      # generator loss
 
     def build_discriminator(self):
         seq = Sequential()
         seq.add(Dense(self.hidden_size, input_dim=self.img_size))
         seq.add(LeakyReLU(alpha=0.2))
-        seq.add(Dense(self.hidden_size, input_dim=self.hidden_size))
+        seq.add(Dense(self.hidden_size))
         seq.add(LeakyReLU(alpha=0.2))
-        seq.add(Dense(1, input_dim=self.hidden_size))
+        seq.add(Dense(1))
         seq.add(Activation('sigmoid'))    
         seq.summary()    
         return seq
@@ -54,11 +54,23 @@ class DcGan(object):
         seq = Sequential()
         seq.add(Dense(self.hidden_size, input_dim=self.latent_size))
         seq.add(LeakyReLU())
-        seq.add(Dense(self.hidden_size, input_dim=self.hidden_size))
+        seq.add(Dense(self.hidden_size))
         seq.add(LeakyReLU())
-        seq.add(Dense(self.img_size, input_dim=self.hidden_size))
+        seq.add(Dense(self.img_size))
         seq.add(Activation('tanh')) 
         seq.summary()       
+        return seq
+    
+    def build_discriminator_model(self):
+        seq = Sequential()
+        seq.add(self.D)
+        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy')
+        return seq
+
+    def build_generator_model(self):
+        seq = Sequential()
+        seq.add(self.G)
+        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy')
         return seq
 
 class MnistDcGan(object):
@@ -71,17 +83,20 @@ class MnistDcGan(object):
     def train(self, epoch_size=200, batch_size=128, save_interval=1):
 
         for i in range(epoch_size):
-            imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
+            real_imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
             real_labels = np.ones([batch_size, 1])
+            fake_imgs = np.random.uniform(-1, 1, (batch_size, self.dcgan.latent_size))
             fake_labels = np.zeros([batch_size, 1])
 
             # ============================================================ #
             #                    Train the discriminator                   #
             # ============================================================ #
+            self.dcgan.DM.train_on_batch(real_imgs, real_labels)
 
             # ============================================================ #
             #                    Train the generator                       #
             # ============================================================ #
+            self.dcgan.GM.train_on_batch(fake_imgs, fake_labels)
 
     def save_image(self, images, path):
         pass

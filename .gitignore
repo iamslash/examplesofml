@@ -90,3 +90,4 @@ ENV/
 
 # mnist data
 mnist
+.vscode
