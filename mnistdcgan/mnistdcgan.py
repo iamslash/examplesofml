@@ -37,7 +37,7 @@ class DcGan(object):
         self.D  = self.build_discriminator()       # discriminator
         self.G  = self.build_generator()       # generator       
         self.DM = self.build_discriminator_model()      # discriminator loss
-        self.GM = self.build_generator_model()      # generator loss
+        self.GDM = self.build_adversarial_model()      # generator loss
 
     def build_discriminator(self):
         seq = Sequential()
@@ -64,13 +64,14 @@ class DcGan(object):
     def build_discriminator_model(self):
         seq = Sequential()
         seq.add(self.D)
-        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy')
+        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy', metrics=['accuracy'])
         return seq
 
-    def build_generator_model(self):
+    def build_adversarial_model(self):
         seq = Sequential()
         seq.add(self.G)
-        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy')
+        seq.add(self.D)
+        seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy',metrics=['accuracy'])
         return seq
 
 class MnistDcGan(object):
@@ -81,22 +82,34 @@ class MnistDcGan(object):
         self.x_train = self.x_train.reshape(-1, self.dcgan.img_size).astype(np.float32)
 
     def train(self, epoch_size=200, batch_size=128, save_interval=1):
+        real_labels = np.ones([batch_size, 1])
+        fake_labels = np.zeros([batch_size, 1])
+        comp_labels = np.concatenate((real_labels, fake_labels))
 
         for i in range(epoch_size):
             real_imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
-            real_labels = np.ones([batch_size, 1])
-            fake_imgs = np.random.uniform(-1, 1, (batch_size, self.dcgan.latent_size))
-            fake_labels = np.zeros([batch_size, 1])
+            
+            fake_imgs = np.random.uniform(-1, 1, size=[batch_size, self.dcgan.latent_size])
+            fake_imgs = self.dcgan.G.predict(fake_imgs)
+            
+            comp_imgs = np.concatenate((real_imgs, fake_imgs))
 
             # ============================================================ #
             #                    Train the discriminator                   #
             # ============================================================ #
-            self.dcgan.DM.train_on_batch(real_imgs, real_labels)
+            d_loss = self.dcgan.DM.train_on_batch(comp_imgs, comp_labels)
 
             # ============================================================ #
             #                    Train the generator                       #
             # ============================================================ #
-            self.dcgan.GM.train_on_batch(fake_imgs, fake_labels)
+            fake_imgs = np.random.uniform(-1, 1, size=[batch_size, self.dcgan.latent_size])
+            a_loss = self.dcgan.GDM.train_on_batch(fake_imgs, real_labels)
+
+            msg = "%d: [D loss: %f, acc: %f]" % (i, d_loss[0], d_loss[1])
+            msg = "%s  [A loss: %f, acc: %f]" % (msg, a_loss[0], a_loss[1])
+            print(msg)
+            fake_img = np.random.uniform(-1, 1, size=[1, self.dcgan.latent_size])
+            self.save_image(self.dcgan.G.predict(fake_img), "./imgs/gimg_%4d.png"%(i))
 
     def save_image(self, images, path):
         pass
@@ -104,5 +117,5 @@ class MnistDcGan(object):
 if __name__ == '__main__':
     mdg = MnistDcGan()
     timer = ElapsedTimer()
-    mdg.train(epoch_size=1, batch_size=128, save_interval=10)
+    mdg.train(epoch_size=256, batch_size=128, save_interval=20)
     timer.elapsed_time()    
