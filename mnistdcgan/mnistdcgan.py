@@ -225,5 +225,5 @@ if __name__ == '__main__':
     shutil.rmtree(IMGDIR, ignore_errors=True)
     mdg = MnistDcGan()
     timer = ElapsedTimer()
-    mdg.train(epoch_size=1024, batch_size=128, save_interval=64)
+    mdg.train(epoch_size=1024*12, batch_size=128, save_interval=64)
     timer.elapsed_time()
