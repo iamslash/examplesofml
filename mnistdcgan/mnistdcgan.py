@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import time
 import tensorflow as tf
@@ -11,6 +13,8 @@ from keras.layers import BatchNormalization
 from keras.optimizers import Adam, RMSprop
 
 import matplotlib.pyplot as plt
+
+IMGDIR = './imgs'
 
 class ElapsedTimer(object):
     def __init__(self):
@@ -37,7 +41,7 @@ class DcGan(object):
         self.D  = self.build_discriminator()       # discriminator
         self.G  = self.build_generator()       # generator       
         self.DM = self.build_discriminator_model()      # discriminator loss
-        self.GDM = self.build_adversarial_model()      # generator loss
+        self.AM = self.build_adversarial_model()      # generator loss
 
     def build_discriminator(self):
         seq = Sequential()
@@ -103,19 +107,34 @@ class MnistDcGan(object):
             #                    Train the generator                       #
             # ============================================================ #
             fake_imgs = np.random.uniform(-1, 1, size=[batch_size, self.dcgan.latent_size])
-            a_loss = self.dcgan.GDM.train_on_batch(fake_imgs, real_labels)
+            a_loss = self.dcgan.AM.train_on_batch(fake_imgs, real_labels)
 
             msg = "%d: [D loss: %f, acc: %f]" % (i, d_loss[0], d_loss[1])
             msg = "%s  [A loss: %f, acc: %f]" % (msg, a_loss[0], a_loss[1])
             print(msg)
-            fake_img = np.random.uniform(-1, 1, size=[1, self.dcgan.latent_size])
-            self.save_image(self.dcgan.G.predict(fake_img), "./imgs/gimg_%4d.png"%(i))
+            if (i+1) % save_interval == 0:
+                fake_img = np.random.uniform(-1, 1, size=[16, self.dcgan.latent_size])
+                self.save_image(self.dcgan.G.predict(fake_img), "%s/gimg_%04d.png"%(IMGDIR, i))
 
-    def save_image(self, images, path):
-        pass
+    def save_image(self, imgs, path):
+        self.enforce_path(path)
+        plt.figure(figsize=(10, 10))
+        for i in range(imgs.shape[0]):
+            plt.subplot(4, 4, i+1)
+            img = imgs[i].reshape(self.dcgan.img_row, self.dcgan.img_col)
+            plt.imshow(img, cmap='gray')
+            plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(path)
+        plt.close('all')
+    
+    def enforce_path(self, path):
+        d = os.path.dirname(path)
+        if not os.path.exists(d):
+            os.mkdir(d)
 
 if __name__ == '__main__':
     mdg = MnistDcGan()
     timer = ElapsedTimer()
-    mdg.train(epoch_size=256, batch_size=128, save_interval=20)
+    mdg.train(epoch_size=128, batch_size=128, save_interval=1)
     timer.elapsed_time()    
