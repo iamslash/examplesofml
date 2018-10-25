@@ -15,6 +15,8 @@ from keras.optimizers import Adam, RMSprop
 import matplotlib.pyplot as plt
 
 IMGDIR = './imgs'
+PLOTIMGROW=12
+PLOTIMGCOL=8
 
 class ElapsedTimer(object):
     def __init__(self):
@@ -200,14 +202,14 @@ class MnistDcGan(object):
             msg =   "%s  [A loss: %f, acc: %f]" % (msg, a_loss[0], a_loss[1])
             print(msg)
             if (i+1) % save_interval == 0:
-                fake_img = np.random.uniform(-1, 1, size=[16, self.dcgan.latent_size])
+                fake_img = np.random.uniform(-1, 1, size=[PLOTIMGROW*PLOTIMGCOL, self.dcgan.latent_size])
                 self.save_image(self.dcgan.G.predict(fake_img), "%s/gimg_%04d.png"%(IMGDIR, i))
 
     def save_image(self, imgs, path):
         self.enforce_path(path)
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(32, 32))
         for i in range(imgs.shape[0]):
-            plt.subplot(4, 4, i+1)
+            plt.subplot(PLOTIMGROW, PLOTIMGCOL, i+1)
             img = imgs[i].reshape(self.dcgan.img_row, self.dcgan.img_col)
             plt.imshow(img, cmap='gray')
             plt.axis('off')
@@ -225,5 +227,5 @@ if __name__ == '__main__':
     shutil.rmtree(IMGDIR, ignore_errors=True)
     mdg = MnistDcGan()
     timer = ElapsedTimer()
-    mdg.train(epoch_size=1024*12, batch_size=128, save_interval=64)
+    mdg.train(epoch_size=128, batch_size=128, save_interval=8)
     timer.elapsed_time()
