@@ -1,3 +1,4 @@
+from abc import *
 import os
 
 import numpy as np
@@ -31,7 +32,7 @@ class ElapsedTimer(object):
     def elapsed_time(self):
         print("Elapsed: {} ".format(self.elapsed(time.time() - self.start)))
 
-class DcGan(object):
+class GanBase(object):
     def __init__(self, row=28, col=28, chn=1):
         self.img_row = row
         self.img_col = col
@@ -45,93 +46,113 @@ class DcGan(object):
         self.DM = self.build_discriminator_model()      # discriminator loss
         self.AM = self.build_adversarial_model()      # generator loss
 
-    # def build_discriminator(self):
-    #     seq = Sequential()
-    #     depth = self.latent_size
-    #     dropout = 0.4
-    #     # In: 28 x 28 x 1, depth = 1
-    #     # Out: 14 x 14 x 1, depth=64
-    #     input_shape = (self.img_row, self.img_col, self.img_chn)
-    #     seq.add(Conv2D(depth*1, 5, strides=2, input_shape=input_shape, padding='same'))
-    #     seq.add(LeakyReLU(alpha=0.2))
-    #     seq.add(Dropout(dropout))
+    @abstractmethod
+    def build_discriminator(self):
+        pass
 
-    #     seq.add(Conv2D(depth*2, 5, strides=2, padding='same'))
-    #     seq.add(LeakyReLU(alpha=0.2))
-    #     seq.add(Dropout(dropout))
+    @abstractmethod
+    def build_generator(self):
+        pass
 
-    #     seq.add(Conv2D(depth*4, 5, strides=2, padding='same'))
-    #     seq.add(LeakyReLU(alpha=0.2))
-    #     seq.add(Dropout(dropout))
+    @abstractmethod
+    def build_discriminator_model(self):
+        pass
 
-    #     seq.add(Conv2D(depth*8, 5, strides=1, padding='same'))
-    #     seq.add(LeakyReLU(alpha=0.2))
-    #     seq.add(Dropout(dropout))
+    @abstractmethod
+    def build_adversarial_model(self):
+        pass
 
-    #     # Out: 1-dim probability
-    #     seq.add(Flatten())
-    #     seq.add(Dense(1))
-    #     seq.add(Activation('sigmoid'))
-    #     seq.summary()
-    #     return seq
+class DcGan(GanBase):
+    def build_discriminator(self):
+        seq = Sequential()
+        depth = self.latent_size
+        dropout = 0.4
+        # In: 28 x 28 x 1, depth = 1
+        # Out: 14 x 14 x 1, depth=64
+        input_shape = (self.img_row, self.img_col, self.img_chn)
+        seq.add(Conv2D(depth*1, 5, strides=2, input_shape=input_shape, padding='same'))
+        seq.add(LeakyReLU(alpha=0.2))
+        seq.add(Dropout(dropout))
 
-    # def build_generator(self):
-    #     seq = Sequential()
-    #     dropout = 0.4
-    #     depth = self.latent_size * 4
-    #     dim = 7
-    #     # In: 100
-    #     # Out: dim x dim x depth
-    #     seq.add(Dense(dim*dim*depth, input_dim=self.latent_size))
-    #     seq.add(BatchNormalization(momentum=0.9))
-    #     seq.add(Activation('relu'))
-    #     seq.add(Reshape((dim, dim, depth)))
-    #     seq.add(Dropout(dropout))
+        seq.add(Conv2D(depth*2, 5, strides=2, padding='same'))
+        seq.add(LeakyReLU(alpha=0.2))
+        seq.add(Dropout(dropout))
 
-    #     # In: dim x dim x depth
-    #     # Out: 2*dim x 2*dim x depth/2
-    #     seq.add(UpSampling2D())
-    #     seq.add(Conv2DTranspose(int(depth/2), 5, padding='same'))
-    #     seq.add(BatchNormalization(momentum=0.9))
-    #     seq.add(Activation('relu'))
+        seq.add(Conv2D(depth*4, 5, strides=2, padding='same'))
+        seq.add(LeakyReLU(alpha=0.2))
+        seq.add(Dropout(dropout))
 
-    #     seq.add(UpSampling2D())
-    #     seq.add(Conv2DTranspose(int(depth/4), 5, padding='same'))
-    #     seq.add(BatchNormalization(momentum=0.9))
-    #     seq.add(Activation('relu'))
+        seq.add(Conv2D(depth*8, 5, strides=1, padding='same'))
+        seq.add(LeakyReLU(alpha=0.2))
+        seq.add(Dropout(dropout))
 
-    #     seq.add(Conv2DTranspose(int(depth/8), 5, padding='same'))
-    #     seq.add(BatchNormalization(momentum=0.9))
-    #     seq.add(Activation('relu'))
+        # Out: 1-dim probability
+        seq.add(Flatten())
+        seq.add(Dense(1))
+        seq.add(Activation('sigmoid'))
+        seq.summary()
+        return seq
 
-    #     # Out: 28 x 28 x 1 grayscale image [0.0,1.0] per pix
-    #     seq.add(Conv2DTranspose(1, 5, padding='same'))
-    #     seq.add(Activation('sigmoid'))
-    #     seq.summary()
-    #     return seq
+    def build_generator(self):
+        seq = Sequential()
+        dropout = 0.4
+        depth = self.latent_size * 4
+        dim = 7
+        # In: 100
+        # Out: dim x dim x depth
+        seq.add(Dense(dim*dim*depth, input_dim=self.latent_size))
+        seq.add(BatchNormalization(momentum=0.9))
+        seq.add(Activation('relu'))
+        seq.add(Reshape((dim, dim, depth)))
+        seq.add(Dropout(dropout))
 
-    # def build_discriminator_model(self):
-    #     optimizer = RMSprop(lr=0.0002, decay=6e-8)
-    #     seq = Sequential()
-    #     seq.add(self.D)
-    #     seq.compile(loss='binary_crossentropy', optimizer=optimizer,
-    #         metrics=['accuracy'])
-    #     return seq
+        # In: dim x dim x depth
+        # Out: 2*dim x 2*dim x depth/2
+        seq.add(UpSampling2D())
+        seq.add(Conv2DTranspose(int(depth/2), 5, padding='same'))
+        seq.add(BatchNormalization(momentum=0.9))
+        seq.add(Activation('relu'))
 
-    # def build_adversarial_model(self):
-    #     optimizer = RMSprop(lr=0.0001, decay=3e-8)
-    #     seq = Sequential()
-    #     seq.add(self.G)
-    #     seq.add(self.D)
-    #     seq.compile(loss='binary_crossentropy', optimizer=optimizer,
-    #         metrics=['accuracy'])
-    #     return seq      
+        seq.add(UpSampling2D())
+        seq.add(Conv2DTranspose(int(depth/4), 5, padding='same'))
+        seq.add(BatchNormalization(momentum=0.9))
+        seq.add(Activation('relu'))
+
+        seq.add(Conv2DTranspose(int(depth/8), 5, padding='same'))
+        seq.add(BatchNormalization(momentum=0.9))
+        seq.add(Activation('relu'))
+
+        # Out: 28 x 28 x 1 grayscale image [0.0,1.0] per pix
+        seq.add(Conv2DTranspose(1, 5, padding='same'))
+        seq.add(Activation('sigmoid'))
+        seq.summary()
+        return seq
+
+    def build_discriminator_model(self):
+        optimizer = RMSprop(lr=0.0002, decay=6e-8)
+        seq = Sequential()
+        seq.add(self.D)
+        seq.compile(loss='binary_crossentropy', optimizer=optimizer,
+            metrics=['accuracy'])
+        return seq
+
+    def build_adversarial_model(self):
+        optimizer = RMSprop(lr=0.0001, decay=3e-8)
+        seq = Sequential()
+        seq.add(self.G)
+        seq.add(self.D)
+        seq.compile(loss='binary_crossentropy', optimizer=optimizer,
+            metrics=['accuracy'])
+        return seq      
+
+class BasicGan(GanBase):        
 
     def build_discriminator(self):
         input_shape = (self.img_row, self.img_col, self.img_chn)
 
-        seq = Sequential()       
-        seq.add(Dense(self.hidden_size, input_shape=input_shape))
+        seq = Sequential()
+        seq.add(Flatten(input_shape=input_shape))
+        seq.add(Dense(self.hidden_size))
         seq.add(LeakyReLU(alpha=0.2))
         seq.add(Dense(self.hidden_size))
         seq.add(LeakyReLU(alpha=0.2))
@@ -158,6 +179,7 @@ class DcGan(object):
         seq = Sequential()
         seq.add(self.D)
         seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy', metrics=['accuracy'])
+        seq.summary()
         return seq
 
     def build_adversarial_model(self):
@@ -165,6 +187,7 @@ class DcGan(object):
         seq.add(self.G)
         seq.add(self.D)
         seq.compile(optimizer=Adam(lr=0.0002), loss='binary_crossentropy', metrics=['accuracy'])
+        seq.summary()
         return seq
 
 class MnistDcGan(object):
@@ -172,7 +195,6 @@ class MnistDcGan(object):
         self.dcgan = DcGan()
 
         self.x_train = input_data.read_data_sets("mnist", one_hot=True).train.images
-        #self.x_train = self.x_train.reshape(-1, self.dcgan.img_size).astype(np.float32)
         self.x_train = self.x_train.reshape(-1, 
             self.dcgan.img_row, self.dcgan.img_col, self.dcgan.img_chn).astype(np.float32)
 
@@ -182,19 +204,18 @@ class MnistDcGan(object):
         comp_labels = np.concatenate((real_labels, fake_labels))
 
         for i in range(epoch_size):
-            #real_imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
             real_imgs = self.x_train[np.random.randint(0,
                 self.x_train.shape[0], size=batch_size), :, :, :]
 
             fake_imgs = np.random.uniform(-1.0, 1.0, size=[batch_size, self.dcgan.latent_size])
             fake_imgs = self.dcgan.G.predict(fake_imgs)
-            
+            #import pdb; pdb.set_trace()            
             comp_imgs = np.concatenate((real_imgs, fake_imgs))
 
             # ============================================================ #
             #                    Train the discriminator                   #
             # ============================================================ #
-            import pdb; pdb.set_trace()
+
             d_loss = self.dcgan.DM.train_on_batch(comp_imgs, comp_labels)
 
             # ============================================================ #
@@ -212,7 +233,7 @@ class MnistDcGan(object):
 
     def save_image(self, imgs, path):
         self.enforce_path(path)
-        plt.figure(figsize=(32, 32))
+        plt.figure(figsize=(16, 16))
         for i in range(imgs.shape[0]):
             plt.subplot(PLOTIMGROW, PLOTIMGCOL, i+1)
             img = imgs[i].reshape(self.dcgan.img_row, self.dcgan.img_col)
