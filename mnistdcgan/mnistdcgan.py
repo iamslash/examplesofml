@@ -128,9 +128,10 @@ class DcGan(object):
     #     return seq      
 
     def build_discriminator(self):
-        seq = Sequential()
-        #seq.add(Reshape(self.img_size))        
-        seq.add(Dense(self.hidden_size, input_dim=self.img_size))
+        input_shape = (self.img_row, self.img_col, self.img_chn)
+
+        seq = Sequential()       
+        seq.add(Dense(self.hidden_size, input_shape=input_shape))
         seq.add(LeakyReLU(alpha=0.2))
         seq.add(Dense(self.hidden_size))
         seq.add(LeakyReLU(alpha=0.2))
@@ -149,7 +150,7 @@ class DcGan(object):
         seq.add(ReLU())
         seq.add(Dense(self.img_size))
         seq.add(Activation('tanh')) 
-        #seq.add(Reshape(output_shape))
+        seq.add(Reshape(output_shape))
         seq.summary()
         return seq
     
@@ -171,9 +172,9 @@ class MnistDcGan(object):
         self.dcgan = DcGan()
 
         self.x_train = input_data.read_data_sets("mnist", one_hot=True).train.images
-        self.x_train = self.x_train.reshape(-1, self.dcgan.img_size).astype(np.float32)
-        # self.x_train = self.x_train.reshape(-1, 
-        #     self.dcgan.img_row, self.dcgan.img_col, self.dcgan.img_chn).astype(np.float32)
+        #self.x_train = self.x_train.reshape(-1, self.dcgan.img_size).astype(np.float32)
+        self.x_train = self.x_train.reshape(-1, 
+            self.dcgan.img_row, self.dcgan.img_col, self.dcgan.img_chn).astype(np.float32)
 
     def train(self, epoch_size=200, batch_size=128, save_interval=1):
         real_labels = np.ones([batch_size, 1])
@@ -181,9 +182,9 @@ class MnistDcGan(object):
         comp_labels = np.concatenate((real_labels, fake_labels))
 
         for i in range(epoch_size):
-            real_imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
-            # real_imgs = self.x_train[np.random.randint(0,
-            #     self.x_train.shape[0], size=batch_size), :, :, :]
+            #real_imgs = self.x_train[np.random.randint(0, self.x_train.shape[0], size=batch_size), :]
+            real_imgs = self.x_train[np.random.randint(0,
+                self.x_train.shape[0], size=batch_size), :, :, :]
 
             fake_imgs = np.random.uniform(-1.0, 1.0, size=[batch_size, self.dcgan.latent_size])
             fake_imgs = self.dcgan.G.predict(fake_imgs)
@@ -193,6 +194,7 @@ class MnistDcGan(object):
             # ============================================================ #
             #                    Train the discriminator                   #
             # ============================================================ #
+            import pdb; pdb.set_trace()
             d_loss = self.dcgan.DM.train_on_batch(comp_imgs, comp_labels)
 
             # ============================================================ #
