@@ -4,7 +4,8 @@ import os
 import numpy as np
 import time
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+from keras.datasets import mnist
+import matplotlib.pyplot as plt
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten, Reshape
@@ -13,11 +14,9 @@ from keras.layers import LeakyReLU, Dropout, ReLU
 from keras.layers import BatchNormalization
 from keras.optimizers import Adam, RMSprop
 
-import matplotlib.pyplot as plt
-
 IMGDIR = './imgs'
-PLOTIMGROW=12
-PLOTIMGCOL=8
+PLOTIMGROW=5
+PLOTIMGCOL=5
 
 class ElapsedTimer(object):
     def __init__(self):
@@ -158,7 +157,8 @@ class BasicGan(GanBase):
         seq.add(LeakyReLU(alpha=0.2))
         seq.add(Dense(1))
         seq.add(Activation('sigmoid'))    
-        seq.summary()    
+        #seq.summary()   
+
         return seq
 
     def build_generator(self):
@@ -172,7 +172,7 @@ class BasicGan(GanBase):
         seq.add(Dense(self.img_size))
         seq.add(Activation('tanh')) 
         seq.add(Reshape(output_shape))
-        seq.summary()
+        #seq.summary()
         return seq
     
     def build_discriminator_model(self):
@@ -183,6 +183,8 @@ class BasicGan(GanBase):
         return seq
 
     def build_adversarial_model(self):
+        self.D.trainable = False
+
         seq = Sequential()
         seq.add(self.G)
         seq.add(self.D)
@@ -190,13 +192,14 @@ class BasicGan(GanBase):
         seq.summary()
         return seq
 
-class MnistDcGan(object):
-    def __init__(self):
-        self.dcgan = DcGan()
+class MnistGan(object):
 
-        self.x_train = input_data.read_data_sets("mnist", one_hot=True).train.images
-        self.x_train = self.x_train.reshape(-1, 
-            self.dcgan.img_row, self.dcgan.img_col, self.dcgan.img_chn).astype(np.float32)
+    def __init__(self):
+        self.dcgan = BasicGan()
+        #import pdb; pdb.set_trace()            
+        (self.x_train, _), (_, _) = mnist.load_data()
+        self.x_train = self.x_train / 127.5 - 1.
+        self.x_train = np.expand_dims(self.x_train, axis=3)
 
     def train(self, epoch_size=200, batch_size=128, save_interval=1):
         real_labels = np.ones([batch_size, 1])
@@ -209,7 +212,7 @@ class MnistDcGan(object):
 
             fake_imgs = np.random.uniform(-1.0, 1.0, size=[batch_size, self.dcgan.latent_size])
             fake_imgs = self.dcgan.G.predict(fake_imgs)
-            #import pdb; pdb.set_trace()            
+            
             comp_imgs = np.concatenate((real_imgs, fake_imgs))
 
             # ============================================================ #
@@ -227,20 +230,23 @@ class MnistDcGan(object):
             msg = "%04d: [D loss: %f, acc: %f]" % (i, d_loss[0], d_loss[1])
             msg =   "%s  [A loss: %f, acc: %f]" % (msg, a_loss[0], a_loss[1])
             print(msg)
-            if (i+1) % save_interval == 0:
+            if i % save_interval == 0:
                 fake_img = np.random.uniform(-1, 1, size=[PLOTIMGROW*PLOTIMGCOL, self.dcgan.latent_size])
                 self.save_image(self.dcgan.G.predict(fake_img), "%s/gimg_%04d.png"%(IMGDIR, i))
 
     def save_image(self, imgs, path):
         self.enforce_path(path)
-        plt.figure(figsize=(16, 16))
-        for i in range(imgs.shape[0]):
-            plt.subplot(PLOTIMGROW, PLOTIMGCOL, i+1)
-            img = imgs[i].reshape(self.dcgan.img_row, self.dcgan.img_col)
-            plt.imshow(img, cmap='gray')
-            plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(path)
+        #plt.figure(figsize=(16, 16))
+        fig, axs = plt.subplots(PLOTIMGROW, PLOTIMGCOL)
+        idx = 0
+        for i in range(PLOTIMGROW):
+            for j in range(PLOTIMGCOL):
+                img = imgs[idx].reshape(self.dcgan.img_row, self.dcgan.img_col)
+                axs[i, j].imshow(img)
+                axs[i, j].axis('off')
+                idx += 1
+        #plt.tight_layout()
+        fig.savefig(path)
         plt.close('all')
     
     def enforce_path(self, path):
@@ -251,7 +257,7 @@ class MnistDcGan(object):
 if __name__ == '__main__':
     import shutil
     shutil.rmtree(IMGDIR, ignore_errors=True)
-    mdg = MnistDcGan()
+    gan = MnistGan()
     timer = ElapsedTimer()
-    mdg.train(epoch_size=128, batch_size=128, save_interval=8)
+    gan.train(epoch_size=128, batch_size=128, save_interval=8)
     timer.elapsed_time()
