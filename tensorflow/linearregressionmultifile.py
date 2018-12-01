@@ -33,8 +33,10 @@ def main():
             print(f'{n_step:10d} cost: {f_C:10.7f} pred: ', l_H)
 
         # Ask my score
-        print("Your score will be ", sess.run(t_H, feed_dict={t_X: [[100, 70, 101]]}))
-        print("Other scores will be ", sess.run(t_H, feed_dict={t_X: [[60, 70, 110], [90, 100, 80]]}))
+        ll_X = [[100, 70, 101]]
+        print(ll_X, " will be ", sess.run(t_H, feed_dict={t_X: ll_X}))
+        ll_X = [[60, 70, 110], [90, 100, 80]]
+        print(ll_X, "will be ", sess.run(t_H, feed_dict={t_X: ll_X}))
 
 if __name__ == "__main__":
     main()
