@@ -12,15 +12,15 @@ def main():
     t_T = t_O.minimize(t_C)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for step in range(2000):
+        for n_step in range(10000):
             sess.run(t_T)
-            if step % 20 == 0:
+            if n_step % 20 == 0:
                 f_cost = sess.run(t_C)
                 l_W = sess.run(t_W)
                 l_b = sess.run(t_b)
 
                 #print("step = {:7d} loss = {:5.3f} W = {:5.3f} b = {:5.3f}".format(step, f_cost, f_W, f_b) )
-                print("{:7d}".format(step), "{:10.7f}".format(f_cost), l_W, l_b)
+                print("{:7d}".format(n_step), "{:10.7f}".format(f_cost), l_W, l_b)
 
 if __name__ == "__main__":
     main()
